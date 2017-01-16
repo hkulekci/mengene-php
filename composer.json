@@ -1,0 +1,23 @@
+{
+    "name": "mengene/mengene-php",
+    "description": "Official PHP library for Mengene API.",
+    "keywords": ["Mengene", "image", "optimization", "compression"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Hidayet Doğan",
+            "email": "hdogan@gmail.com",
+            "homepage": "http://hi.do"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": { "Mengene\\": "src/" },
+        "files": [ "src/functions.php" ]
+    }
+}
