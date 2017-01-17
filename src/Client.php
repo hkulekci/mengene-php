@@ -48,6 +48,9 @@ class Client
     /** @var int */
     private $_timeout = 60;
 
+    /** @var string */
+    private $_userAgent = 'MengenePHP/1.0';
+
     /**
      * @param null|string $apiKey
      */
@@ -70,23 +73,23 @@ class Client
         $options = $this->_options + $options;
 
         if (isset($options['file'])) {
-            $endpoint = '/upload';
             $file = $options['file'];
 
             unset($options['file']);
 
-            $data = [
-                'file' => $file,
-                'input' => $options,
-            ];
+            $options = array_filter($options);
+            $data = ['file' => $file];
+
+            if (count($options) > 0) {
+                $data['input'] = json_encode($options);
+            }
         } else if (isset($options['url'])) {
-            $endpoint = '/url';
             $data = $options;
         } else {
             throw new \LogicException('File or url must be specified');
         }
 
-        return self::_request($endpoint, 'POST', $data);
+        return self::_request('/process', 'POST', $data);
     }
 
     /**
@@ -95,6 +98,53 @@ class Client
     public function status()
     {
         return self::_request('/status');
+    }
+
+    /**
+     * Downloads processed image
+     *
+     * @param array $result Result array returned from `process()` method.
+     * @param string $path Local file path
+     * @return void
+     * @throws \Exception
+     * @throws \InvalidArgumentException
+     */
+    public function download(array $result, $path)
+    {
+        if (empty($result['output_url'])) {
+            throw new \InvalidArgumentException('Invalid response');
+        }
+
+        if (false === ($fp = @fopen($path, 'w'))) {
+            throw new \Exception('Unable to create file');
+        }
+
+        if (false === ($ch = curl_init($result['output_url']))) {
+            throw new \Exception('Unable to init curl');
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_FAILONERROR => 1,
+            CURLOPT_FILE => $fp,
+            CURLOPT_USERAGENT => $this->_userAgent,
+        ]);
+
+        curl_exec($ch);
+
+        if (curl_errno($ch) > 0) {
+            @fclose($fp);
+            @unlink($path);
+            throw new \Exception('Download is failed with error: ' . curl_error($ch));
+        }
+
+        curl_close($ch);
+
+        if (false === @fclose($fp)) {
+            @unlink($path);
+            throw new \Exception('Unable to close file pointer');
+        }
+
+        return;
     }
 
     /**
@@ -114,7 +164,7 @@ class Client
      */
     public function setCompressionLevel($level)
     {
-        $this->_options['compression-level'] = $level;
+        $this->_options['compression_level'] = $level;
 
         return $this;
     }
@@ -147,7 +197,7 @@ class Client
      */
     public function setOptimizationMode($mode)
     {
-        $this->_options['optimization-mode'] = $mode;
+        $this->_options['optimization_mode'] = $mode;
 
         return $this;
     }
@@ -195,7 +245,7 @@ class Client
      */
     public function setSamplingScheme($scheme)
     {
-        $this->_options['sampling-scheme'] = $scheme;
+        $this->_options['sampling_scheme'] = $scheme;
 
         return $this;
     }
@@ -222,25 +272,34 @@ class Client
     private function _request($endpoint, $method = 'GET', array $data = [])
     {
         if (false === ($ch = curl_init($this->apiUrl . $endpoint))) {
-            throw new ClientFailedException('cURL Error: Unable to init curl');
+            throw new ClientFailedException('Unable to init curl');
         }
 
         $headers = [
             "X-API-Key: {$this->_apiKey}",
         ];
 
-        if ($method === 'GET') {
+        if ($method === 'GET' || isset($data['url'])) {
             $headers[] = 'Content-Type: application/json';
-        } else {
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, array_filter($data));
         }
 
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'MengenePHP/1.0');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_FAILONERROR, 0);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $this->_timeout);
+        $curlOptions = [
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_USERAGENT => $this->_userAgent,
+            CURLOPT_FAILONERROR => 0,
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_TIMEOUT => $this->_timeout,
+
+        ];
+
+        if ($method === 'POST') {
+            $curlOptions += [
+                CURLOPT_POST => 1,
+                CURLOPT_POSTFIELDS => isset($data['url']) ? json_encode($data) : $data,
+            ];
+        }
+
+        curl_setopt_array($ch, $curlOptions);
 
         if (false === ($response = curl_exec($ch))) {
             if (curl_errno($ch) === CURLE_OPERATION_TIMEOUTED) {
@@ -254,8 +313,10 @@ class Client
             throw new ClientFailedException('JSON Error: ' . json_last_error_msg());
         }
 
-        if (false === $result['success']) {
-            throw new ClientFailedException($result['message'], curl_getinfo($ch, CURLINFO_HTTP_CODE));
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($code !== 200 || false === $result['success']) {
+            throw new ClientFailedException($result['message'], $code);
         }
 
         curl_close($ch);

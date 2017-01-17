@@ -42,6 +42,19 @@ $client->setRemoteImage('http://example.com/sample.png');
 $result = $client->process();
 ```
 
+### Download Processed Image
+
+You can use `download()` method to download processed image to local machine.
+
+```php
+use Mengene\Client;
+
+$client = new Client('your-api-key');
+$client->setLocalImage('sample.png');
+$result = $client->process();
+$client->download($result, 'path/to/processed-image.png');
+```
+
 ## Getting User Status
 
 ```php
