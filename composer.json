@@ -1,7 +1,7 @@
 {
-    "name": "mengene/mengene-php",
+    "name": "mengene-io/mengene-php",
     "description": "Official PHP library for Mengene API.",
-    "keywords": ["Mengene", "image", "optimization", "compression"],
+    "keywords": ["mengene", "image", "optimization", "compression"],
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -11,13 +11,21 @@
             "homepage": "http://hi.do"
         }
     ],
+    "support": {
+        "issues": "https://github.com/mengene-io/mengene-php/issues",
+        "source": "https://github.com/mengene-io/mengene-php"
+    },
     "require": {
         "php": ">=5.3.3",
         "ext-curl": "*",
         "ext-json": "*"
     },
     "autoload": {
-        "psr-4": { "Mengene\\": "src/" },
-        "files": [ "src/functions.php" ]
+        "psr-4": {
+            "Mengene\\": "src/"
+        },
+        "files": [
+            "src/functions.php"
+        ]
     }
 }

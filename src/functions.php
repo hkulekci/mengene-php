@@ -1,4 +1,10 @@
 <?php
+/**
+ * PHP library for Mengene API
+ *
+ * @copyright Copyright (c) 2017 Hidayet Doğan
+ * @license https://opensource.org/licenses/MIT MIT License
+ */
 if (!function_exists('curl_file_create')) {
     /**
      * Create a CURLFile object
@@ -17,6 +23,8 @@ if (!function_exists('curl_file_create')) {
 
 if (!function_exists('json_last_error_msg')) {
     /**
+     * Returns the error string of the last json_encode() or json_decode() call
+     *
      * @return string
      */
     function json_last_error_msg() {

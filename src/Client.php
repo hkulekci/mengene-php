@@ -1,27 +1,55 @@
 <?php
+/**
+ * PHP library for Mengene API
+ *
+ * @copyright Copyright (c) 2017 Hidayet Doğan
+ * @license https://opensource.org/licenses/MIT MIT License
+ */
 namespace Mengene;
+
+use Mengene\Exception\ClientFailedException;
+use Mengene\Exception\ClientTimedOutException;
 
 class Client
 {
+    /**
+     * Compression levels
+     */
     const COMPRESSION_HIGH = 'high';
     const COMPRESSION_MEDIUM = 'medium';
     const COMPRESSION_LOW = 'low';
 
+    /**
+     * Optimization modes
+     */
     const OPTIMIZATION_LOSSY = 'lossy';
     const OPTIMIZATION_LOSSLESS = 'lossless';
 
-    const SCHEME_444 = '4:4:4';
-    const SCHEME_422 = '4:2:2';
-    const SCHEME_420 = '4:2:0';
+    /**
+     * Chroma sub-sampling schemes
+     */
+    const SAMPLING_SCHEME_444 = '4:4:4';
+    const SAMPLING_SCHEME_422 = '4:2:2';
+    const SAMPLING_SCHEME_420 = '4:2:0';
 
-    public $apiUrl = 'http://localhost:8888/v1';
+    /**
+     * Base URL of API service
+     *
+     * @var string
+     */
+    public $apiUrl = 'http://localhost:8888/mengene-api/v1';
 
+    /** @var string */
     private $_apiKey = null;
+
+    /** @var array */
     private $_options = [];
+
+    /** @var int */
     private $_timeout = 60;
 
     /**
-     * @param string|null $apiKey
+     * @param null|string $apiKey
      */
     public function __construct($apiKey = null)
     {
@@ -31,36 +59,42 @@ class Client
     }
 
     /**
+     * @param array $options
      * @return array
-     * @throws \Exception
+     * @throws \LogicException
+     */
+    public function process(array $options = [])
+    {
+        unset($options['file'], $options['url']);
+
+        $options = $this->_options + $options;
+
+        if (isset($options['file'])) {
+            $endpoint = '/upload';
+            $file = $options['file'];
+
+            unset($options['file']);
+
+            $data = [
+                'file' => $file,
+                'input' => $options,
+            ];
+        } else if (isset($options['url'])) {
+            $endpoint = '/url';
+            $data = $options;
+        } else {
+            throw new \LogicException('File or url must be specified');
+        }
+
+        return self::_request($endpoint, 'POST', $data);
+    }
+
+    /**
+     * @return array
      */
     public function status()
     {
         return self::_request('/status');
-    }
-
-    /**
-     * @param string $filename
-     * @param array $options
-     * @return array
-     * @throws \InvalidArgumentException
-     * @throws \Exception
-     */
-    public function upload($filename, array $options = [])
-    {
-        if (empty($filename)) {
-            throw new \InvalidArgumentException();
-        }
-
-        if (!is_readable($filename)) {
-        }
-
-        $data = [
-            'file' => curl_file_create($filename),
-            'input' => array_merge($this->_options, $options),
-        ];
-
-        return self::_request('/upload', 'POST', $data);
     }
 
     /**
@@ -86,6 +120,28 @@ class Client
     }
 
     /**
+     * @param string $path
+     * @return self
+     * @throws \InvalidArgumentException
+     */
+    public function setLocalImage($path)
+    {
+        if (!is_file($path)) {
+            throw new \InvalidArgumentException('Invalid file');
+        }
+
+        if (!is_readable($path)) {
+            throw new \InvalidArgumentException('Unable to read file');
+        }
+
+        unset($this->_options['url']);
+
+        $this->_options['file'] = curl_file_create($path);
+
+        return $this;
+    }
+
+    /**
      * @param string $mode
      * @return self
      */
@@ -97,17 +153,38 @@ class Client
     }
 
     /**
-     * @param integer $quality
+     * @param int $quality
      * @return self
-     * @throws \InvalidArgumentException
      */
     public function setQuality($quality)
     {
-        if ($quality < 1 || $quality > 100) {
-            throw new \InvalidArgumentException('Invalid quality');
+        $this->_options['quality'] = $quality;
+
+        return $this;
+    }
+
+    /**
+     * @param string $url
+     * @return self
+     * @throws \InvalidArgumentException
+     */
+    public function setRemoteImage($url)
+    {
+        if (false === filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new \InvalidArgumentException('Invalid url');
         }
 
-        $this->_options['quality'] = $quality;
+        if (false === ($scheme = parse_url($url, PHP_URL_SCHEME))) {
+            throw new \InvalidArgumentException('Invalid url');
+        }
+
+        if (!in_array($scheme, ['http', 'https'])) {
+            throw new \InvalidArgumentException('Invalid url scheme');
+        }
+
+        unset($this->_options['file']);
+
+        $this->_options['url'] = $url;
 
         return $this;
     }
@@ -124,7 +201,7 @@ class Client
     }
 
     /**
-     * @param integer $seconds
+     * @param int $seconds
      * @return self
      */
     public function setTimeout($seconds)
@@ -139,12 +216,13 @@ class Client
      * @param string $method
      * @param array $data
      * @return array
-     * @throws \Exception
+     * @throws ClientFailedException
+     * @throws ClientTimedOutException
      */
     private function _request($endpoint, $method = 'GET', array $data = [])
     {
         if (false === ($ch = curl_init($this->apiUrl . $endpoint))) {
-            return new \Exception('cURL Error: Unable to init curl');
+            throw new ClientFailedException('cURL Error: Unable to init curl');
         }
 
         $headers = [
@@ -153,10 +231,9 @@ class Client
 
         if ($method === 'GET') {
             $headers[] = 'Content-Type: application/json';
-        }
-        else {
+        } else {
             curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, array_filter($data));
         }
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -166,18 +243,22 @@ class Client
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->_timeout);
 
         if (false === ($response = curl_exec($ch))) {
-            throw new \Exception('cURL Error: ' . curl_error($ch));
+            if (curl_errno($ch) === CURLE_OPERATION_TIMEOUTED) {
+                throw new ClientTimedOutException(curl_error($ch));
+            } else {
+                throw new ClientFailedException('cURL Error: ' . curl_error($ch));
+            }
         }
 
-        curl_close($ch);
-
         if (null === ($result = json_decode($response, true))) {
-            throw new \Exception('JSON Error: ' . json_last_error_msg());
+            throw new ClientFailedException('JSON Error: ' . json_last_error_msg());
         }
 
         if (false === $result['success']) {
-            throw new \Exception($result['message'], curl_getinfo($ch, CURLINFO_HTTP_CODE));
+            throw new ClientFailedException($result['message'], curl_getinfo($ch, CURLINFO_HTTP_CODE));
         }
+
+        curl_close($ch);
 
         return $result;
     }

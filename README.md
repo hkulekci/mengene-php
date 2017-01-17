@@ -4,62 +4,130 @@ Mengene PHP is a PHP library for Mengene API.
 
 ## Installation
 
-You can install the library with [Composer](http://getcomposer.org). Run the following command:
+You can install the library via [Composer](http://getcomposer.org). Run the following command:
 
 ```bash
-$ composer require mengene/mengene-php
+$ composer require mengene-io/mengene-php
 ```
 
-## Basic Usage
+Then require the `vendor/autoload.php` file to enable auto-loading provided by Composer.
+
+## Usage
+
+### Processing Local Image
+
+To process an image file on your local machine use `setLocalImage()` method. This will upload the file to Mengene API
+service.
 
 ```php
 <?php
-require 'vendor/autoload.php';
-
 use Mengene\Client;
 
 $client = new Client('your-api-key');
-$result = $client->upload('sample.png');
+$client->setLocalImage('sample.png');
+$result = $client->process();
+```
+
+### Processing Remote Image
+
+To process an image file from remote location you can use `setRemoteImage()` method. Mengene API service will download
+the file from given url to make it ready for processing. The url must be publicly accessible. 
+
+```php
+<?php
+use Mengene\Client;
+
+$client = new Client('your-api-key');
+$client->setRemoteImage('http://example.com/sample.png');
+$result = $client->process();
+```
+
+## Getting User Status
+
+```php
+<?php
+use Mengene\Client;
+
+$client = new Client('your-api-key');
+$client->status();
 ```
 
 ## Options
 
-### Setting Compression Level
+### Compression Level
 
-Default compression level is `high`. Available compression levels are:
+Default compression level is `high` if not specified. Available compression levels are:
 
-* `Client::COMPRESSION_HIGH` slow but result will be smaller file size
+* `Client::COMPRESSION_HIGH` slow but the smaller file size
 * `Client::COMPRESSION_MEDIUM`
-* `Client::COMPRESSION_LOW` quick but result will be larger file size
+* `Client::COMPRESSION_LOW` fast but the larger file size
 
 ```php
-use Mengene\Client;
-
-$client = new Client('your-api-key');
-$client->setCompressionLevel(Client::COMPRESSION_LOW);
-$result = $client->upload('sample.png');
-```
-
-### Setting Optimization Mode
-
-Default optimization mode is `lossy`. Available optimization modes are:
-
-* `Client::OPTIMIZATION_LOSSY` for smaller file size
-* `Client::OPTIMIZATION_LOSSLESS`
-
-### Setting Quality
-
-Only available if file is `JPEG` and `lossy` optimization mode is used. Default quality
-level is automatically calculated with input file quality. Quality must be between `1` and `100`.
-
-```php
+<?php
 use Mengene\Client;
 
 $client = new Client('your-api-key');
 $client
-    ->setOptimizationMode(Client::OPTIMIZATION_LOSSY);
+    ->setLocalImage('sample.png')
+    ->setCompressionLevel(Client::COMPRESSION_LOW);
+$result = $client->process('sample.png');
+```
+
+### Optimization Mode
+
+Default optimization mode is `lossy` if not specified. Available optimization modes are:
+
+* `Client::OPTIMIZATION_LOSSY` for smaller file size
+* `Client::OPTIMIZATION_LOSSLESS`
+
+```php
+<?php
+use Mengene\Client;
+
+$client = new Client('your-api-key');
+$client
+    ->setLocalImage('sample.png')
+    ->setOptimizationMode(Client::OPTIMIZATION_LOSSLESS);
+$response = $client->process();
+```
+
+### Quality
+
+Only available if the image file is `JPEG` and `lossy` optimization mode is used. Default quality level is
+automatically calculated by using input image file quality. Quality must be between `1` and `100`.
+
+```php
+<?php
+use Mengene\Client;
+
+$client = new Client('your-api-key');
+$client
+    ->setLocalImage('sample.jpg')
     ->setQuality(80);
-$response = $client->upload('sample.jpg');
+$response = $client->process();
+```
+
+### Chroma Sub-Sampling
+
+Only available if the image file is `JPEG` and `lossy` optimization mode is used. Default sampling scheme is `4:2:0`.
+Available sampling schemes are:
+
+* `Client::SAMPLING_SCHEME_444`
+* `Client::SAMPLING_SCHEME_422`
+* `Client::SAMPLING_SCHEME_420`
+
+For more information about chroma sub-sampling, see
+[Wikipedia article](https://en.wikipedia.org/wiki/Chroma_subsampling) about it.
+
+```php
+<?php
+use Mengene\Client;
+
+$client = new Client('your-api-key');
+$client
+    ->setLocalImage('sample.jpg')
+    ->setSamplingScheme(Client::SAMPLING_SCHEME_444);
+$response = $client->process();
 ```
 
 ## About
