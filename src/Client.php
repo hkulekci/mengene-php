@@ -37,7 +37,7 @@ class Client
      *
      * @var string
      */
-    public $apiUrl = 'http://localhost:8888/mengene-api/v1';
+    public $apiUrl = 'https://api.mengene.io/v1';
 
     /** @var string */
     private $_apiKey = null;
@@ -49,7 +49,7 @@ class Client
     private $_timeout = 60;
 
     /** @var string */
-    private $_userAgent = 'MengenePHP/1.0';
+    private $_userAgent = 'mengene-php/1.0';
 
     /**
      * @param null|string $apiKey

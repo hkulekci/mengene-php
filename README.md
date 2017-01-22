@@ -28,6 +28,27 @@ $client->setLocalImage('sample.png');
 $result = $client->process();
 ```
 
+Result array will contain information about optimization process and also download url of the optimized image.
+
+```json
+{
+    "success": true,
+    "source_name": "sample.png",
+    "source_size": 5667,
+    "options": {
+        "compression_level": "high",
+        "optimization_mode": "lossy",
+        "quality": null,
+        "sampling_scheme": null
+    },
+    "output_size": 2086,
+    "output_saving": 3581,
+    "output_ratio": 0.36809599435327,
+    "output_percentage": 63.190400564673,
+    "output_url": "https://download.mengene.io/03c3d602d5643ed484e282ee76910cce.png"
+}
+```
+
 ### Processing Remote Image
 
 To process an image file from remote location you can use `setRemoteImage()` method. Mengene API service will download
@@ -44,7 +65,8 @@ $result = $client->process();
 
 ### Download Processed Image
 
-You can use `download()` method to download processed image to local machine.
+`$result['output_url']` gives download url of the processed image. In additional, PHP library provides
+simple `download()` helper method.
 
 ```php
 use Mengene\Client;
