@@ -49,6 +49,9 @@ Result array will contain information about optimization process and also downlo
 }
 ```
 
+You can use `$result['output_url']` to download optimized image manually. There is also `download()` helper
+method to make it downloading easy. Also note that, optimized images are available for download for only 1 hour.
+
 ### Processing Remote Image
 
 To process an image file from remote location you can use `setRemoteImage()` method. Mengene API service will download
@@ -65,8 +68,8 @@ $result = $client->process();
 
 ### Download Processed Image
 
-`$result['output_url']` gives download url of the processed image. In additional, PHP library provides
-simple `download()` helper method.
+`$result['output_url']` gives download url of the optimized image. PHP library provides
+simple `download()` helper method. Note that, optimized images are available for download for only 1 hour.
 
 ```php
 use Mengene\Client;
