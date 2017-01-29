@@ -108,7 +108,7 @@ $client = new Client('your-api-key');
 $client
     ->setLocalImage('sample.png')
     ->setCompressionLevel(Client::COMPRESSION_LOW);
-$result = $client->process('sample.png');
+$result = $client->process();
 ```
 
 ### Optimization Mode
