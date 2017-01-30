@@ -315,7 +315,7 @@ class Client
 
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-        if ($code !== 200 || false === $result['success']) {
+        if (false === $result['success']) {
             throw new ClientFailedException($result['message'], $code);
         }
 
