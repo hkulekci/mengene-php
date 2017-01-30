@@ -7,7 +7,7 @@ Mengene PHP is a PHP library for Mengene API.
 You can install the library via [Composer](http://getcomposer.org). Run the following command:
 
 ```bash
-$ composer require mengene-io/mengene-php:@beta
+$ composer require mengene-io/mengene-php
 ```
 
 Then require the `vendor/autoload.php` file to enable auto-loading provided by Composer.
