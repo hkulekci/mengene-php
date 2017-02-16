@@ -22,10 +22,12 @@ service.
 ```php
 <?php
 use Mengene\Client;
+use Mengene\ImageOptions;
 
 $client = new Client('your-api-key');
-$client->setLocalImage('sample.png');
-$result = $client->process();
+$options = (new ImageOptions())
+    ->setFile('sample.jpg');
+$result = $client->process($options);
 ```
 
 Result array will contain information about optimization process and also download url of the optimized image.
@@ -60,10 +62,12 @@ the file from given url to make it ready for processing. The url must be publicl
 ```php
 <?php
 use Mengene\Client;
+use Mengene\ImageOptions;
 
 $client = new Client('your-api-key');
-$client->setRemoteImage('http://example.com/sample.png');
-$result = $client->process();
+$options = (new ImageOptions())
+    ->setUrl('http://example.com/sample.png');
+$result = $client->process($options);
 ```
 
 ### Download Processed Image
@@ -73,10 +77,12 @@ simple `download()` helper method. Note that, optimized images are available for
 
 ```php
 use Mengene\Client;
+use Mengene\ImageOptions;
 
 $client = new Client('your-api-key');
-$client->setLocalImage('sample.png');
-$result = $client->process();
+$options = (new ImageOptions())
+    ->setFile('sample.jpg');
+$result = $client->process($options);
 $client->download($result, 'path/to/processed-image.png');
 ```
 
@@ -96,37 +102,39 @@ $client->status();
 
 Default compression level is `high` if not specified. Available compression levels are:
 
-* `Client::COMPRESSION_HIGH` slow but the smaller file size
-* `Client::COMPRESSION_MEDIUM`
-* `Client::COMPRESSION_LOW` fast but the larger file size
+* `ImageOptions::COMPRESSION_HIGH` slow but the smaller file size
+* `ImageOptions::COMPRESSION_MEDIUM`
+* `ImageOptions::COMPRESSION_LOW` fast but the larger file size
 
 ```php
 <?php
 use Mengene\Client;
+use Mengene\ImageOptions;
 
 $client = new Client('your-api-key');
-$client
-    ->setLocalImage('sample.png')
-    ->setCompressionLevel(Client::COMPRESSION_LOW);
-$result = $client->process();
+$options = (new ImageOptions())
+    ->setFile('sample.jpg')
+    ->setCompressionLevel(ImageOptions::COMPRESSION_LOW);
+$result = $client->process($options);
 ```
 
 ### Optimization Mode
 
 Default optimization mode is `lossy` if not specified. Available optimization modes are:
 
-* `Client::OPTIMIZATION_LOSSY` for smaller file size
-* `Client::OPTIMIZATION_LOSSLESS`
+* `ImageOptions::OPTIMIZATION_LOSSY` for smaller file size
+* `ImageOptions::OPTIMIZATION_LOSSLESS`
 
 ```php
 <?php
 use Mengene\Client;
+use Mengene\ImageOptions;
 
 $client = new Client('your-api-key');
-$client
-    ->setLocalImage('sample.png')
-    ->setOptimizationMode(Client::OPTIMIZATION_LOSSLESS);
-$response = $client->process();
+$options = (new ImageOptions())
+    ->setFile('sample.jpg')
+    ->setOptimizationMode(ImageOptions::OPTIMIZATION_LOSSLESS);
+$response = $client->process($options);
 ```
 
 ### Quality
@@ -137,12 +145,13 @@ automatically calculated by using input image file quality. Quality must be betw
 ```php
 <?php
 use Mengene\Client;
+use Mengene\ImageOptions;
 
 $client = new Client('your-api-key');
-$client
-    ->setLocalImage('sample.jpg')
+$options = (new ImageOptions())
+    ->setFile('sample.jpg')
     ->setQuality(80);
-$response = $client->process();
+$response = $client->process($options);
 ```
 
 ### Chroma Sub-Sampling
@@ -150,9 +159,9 @@ $response = $client->process();
 Only available if the image file is `JPEG` and `lossy` optimization mode is used. Default sampling scheme is `4:2:0`.
 Available sampling schemes are:
 
-* `Client::SAMPLING_SCHEME_444`
-* `Client::SAMPLING_SCHEME_422`
-* `Client::SAMPLING_SCHEME_420`
+* `ImageOptions::SAMPLING_SCHEME_444`
+* `ImageOptions::SAMPLING_SCHEME_422`
+* `ImageOptions::SAMPLING_SCHEME_420`
 
 For more information about chroma sub-sampling, see
 [Wikipedia article](https://en.wikipedia.org/wiki/Chroma_subsampling) about it.
@@ -160,15 +169,14 @@ For more information about chroma sub-sampling, see
 ```php
 <?php
 use Mengene\Client;
+use Mengene\ImageOptions;
 
 $client = new Client('your-api-key');
-$client
-    ->setLocalImage('sample.jpg')
-    ->setSamplingScheme(Client::SAMPLING_SCHEME_444);
-$response = $client->process();
+$options = (new ImageOptions())
+    ->setFile('sample.jpg')
+    ->setSamplingScheme(ImageOptions::SAMPLING_SCHEME_444);
+$response = $client->process($options);
 ```
-
-## About
 
 ### Author
 

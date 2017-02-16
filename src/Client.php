@@ -13,26 +13,6 @@ use Mengene\Exception\ClientTimedOutException;
 class Client
 {
     /**
-     * Compression levels
-     */
-    const COMPRESSION_HIGH = 'high';
-    const COMPRESSION_MEDIUM = 'medium';
-    const COMPRESSION_LOW = 'low';
-
-    /**
-     * Optimization modes
-     */
-    const OPTIMIZATION_LOSSY = 'lossy';
-    const OPTIMIZATION_LOSSLESS = 'lossless';
-
-    /**
-     * Chroma sub-sampling schemes
-     */
-    const SAMPLING_SCHEME_444 = '4:4:4';
-    const SAMPLING_SCHEME_422 = '4:2:2';
-    const SAMPLING_SCHEME_420 = '4:2:0';
-
-    /**
      * Base URL of API service
      *
      * @var string
@@ -62,34 +42,13 @@ class Client
     }
 
     /**
-     * @param array $options
+     * @param  ImageOptions $options
      * @return array
      * @throws \LogicException
      */
-    public function process(array $options = [])
+    public function process(ImageOptions $options)
     {
-        unset($options['file'], $options['url']);
-
-        $options = $this->_options + $options;
-
-        if (isset($options['file'])) {
-            $file = $options['file'];
-
-            unset($options['file']);
-
-            $options = array_filter($options);
-            $data = ['file' => $file];
-
-            if (count($options) > 0) {
-                $data['input'] = json_encode($options);
-            }
-        } else if (isset($options['url'])) {
-            $data = $options;
-        } else {
-            throw new \LogicException('File or url must be specified');
-        }
-
-        return self::_request('/process', 'POST', $data);
+        return self::_request('/process', 'POST', $options->prepareRequestData());
     }
 
     /**
@@ -154,98 +113,6 @@ class Client
     public function setApiKey($apiKey)
     {
         $this->_apiKey = $apiKey;
-
-        return $this;
-    }
-
-    /**
-     * @param string $level
-     * @return self
-     */
-    public function setCompressionLevel($level)
-    {
-        $this->_options['compression_level'] = $level;
-
-        return $this;
-    }
-
-    /**
-     * @param string $path
-     * @return self
-     * @throws \InvalidArgumentException
-     */
-    public function setLocalImage($path)
-    {
-        if (!is_file($path)) {
-            throw new \InvalidArgumentException('Invalid file');
-        }
-
-        if (!is_readable($path)) {
-            throw new \InvalidArgumentException('Unable to read file');
-        }
-
-        unset($this->_options['url']);
-
-        $this->_options['file'] = curl_file_create($path);
-
-        return $this;
-    }
-
-    /**
-     * @param string $mode
-     * @return self
-     */
-    public function setOptimizationMode($mode)
-    {
-        $this->_options['optimization_mode'] = $mode;
-
-        return $this;
-    }
-
-    /**
-     * @param int $quality
-     * @return self
-     */
-    public function setQuality($quality)
-    {
-        $this->_options['quality'] = $quality;
-
-        return $this;
-    }
-
-    /**
-     * @param string $url
-     * @return self
-     * @throws \InvalidArgumentException
-     */
-    public function setRemoteImage($url)
-    {
-        if (false === filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new \InvalidArgumentException('Invalid url');
-        }
-
-        if (false === ($scheme = parse_url($url, PHP_URL_SCHEME))) {
-            throw new \InvalidArgumentException('Invalid url');
-        }
-
-        if (!in_array($scheme, ['http', 'https'])) {
-            throw new \InvalidArgumentException('Invalid url scheme');
-        }
-
-        unset($this->_options['file']);
-
-        $this->_options['url'] = $url;
-
-        return $this;
-    }
-
-    /**
-     * @param string $scheme
-     * @return self
-     */
-    public function setSamplingScheme($scheme)
-    {
-        $this->_options['sampling_scheme'] = $scheme;
 
         return $this;
     }
