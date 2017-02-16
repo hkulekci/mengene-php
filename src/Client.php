@@ -62,23 +62,20 @@ class Client
     /**
      * Downloads processed image
      *
-     * @param array $result Result array returned from `process()` method.
-     * @param string $path Local file path
-     * @return void
+     * @param Response $response
+     * @param string            $path Local file path
+     *
      * @throws \Exception
-     * @throws \InvalidArgumentException
      */
-    public function download(array $result, $path)
+    public function download(Response $response, $path)
     {
-        if (empty($result['output_url'])) {
-            throw new \InvalidArgumentException('Invalid response');
-        }
+        $url = $response->getDownloadableUrl();
 
         if (false === ($fp = @fopen($path, 'w'))) {
             throw new \Exception('Unable to create file');
         }
 
-        if (false === ($ch = curl_init($result['output_url']))) {
+        if (false === ($ch = curl_init($url))) {
             throw new \Exception('Unable to init curl');
         }
 
@@ -132,7 +129,7 @@ class Client
      * @param string $endpoint
      * @param string $method
      * @param array $data
-     * @return array
+     * @return Response
      * @throws ClientFailedException
      * @throws ClientTimedOutException
      */
@@ -181,13 +178,13 @@ class Client
         }
 
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        if (false === $result['success']) {
-            throw new ClientFailedException($result['message'], $code);
+        
+        $response = new Response($result, $code);
+        if (false === $response->isStatus()) {
+            throw new ClientFailedException($response->getMessage(), $response->getCode());
         }
-
         curl_close($ch);
 
-        return $result;
+        return $response;
     }
 }

@@ -50,7 +50,7 @@ class ImageOptions
     protected $optimizationMode;
 
     /**
-     * @var string $quality
+     * @var integer $quality
      */
     protected $quality;
 
@@ -174,7 +174,7 @@ class ImageOptions
     }
 
     /**
-     * @return string
+     * @return integer
      */
     public function getQuality()
     {
@@ -182,12 +182,15 @@ class ImageOptions
     }
 
     /**
-     * @param string $quality
+     * @param integer $quality
      *
      * @return $this
      */
     public function setQuality($quality)
     {
+        if (!is_int($quality) || $quality <= 0 || $quality > 100) {
+            throw new \LogicException('Quality must be integer between 1-100');
+        }
         $this->quality = $quality;
 
         return $this;
@@ -237,7 +240,7 @@ class ImageOptions
             $return = ['file' => $this->getFile()];
             $input = array_filter($requestData);
             if ($input) {
-                $return['input'] = $input;
+                $return['input'] = json_encode($input);
             }
             return $return;
         }
