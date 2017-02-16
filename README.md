@@ -180,8 +180,8 @@ $response = $client->process($options);
 
 ### Author
 
-Hidayet Doğan - [@hdogan](https://twitter.com/hdogan) - http://hi.do
-Haydar Külekci - [@kulekci](https://twitter.com/kulekci) - http://kulekci.net
+* Hidayet Doğan - [@hdogan](https://twitter.com/hdogan) - http://hi.do
+* Haydar Külekci - [@kulekci](https://twitter.com/kulekci) - http://kulekci.net
 
 ### License
 
